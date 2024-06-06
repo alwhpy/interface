@@ -74,6 +74,7 @@ export function useDebouncedTrade(
     () => [amountSpecified, otherCurrency],
     [amountSpecified, otherCurrency]
   )
+  // 是否在输入中
   const isDebouncing = useDebounce(inputs, DEBOUNCE_TIME) !== inputs
 
   const isPreviewTradeDebouncing = useDebounce(inputs, DEBOUNCE_TIME_QUICKROUTE) !== inputs
@@ -81,12 +82,13 @@ export function useDebouncedTrade(
   const isWrap = useMemo(() => {
     if (!chainId || !amountSpecified || !otherCurrency) return false
     const weth = WRAPPED_NATIVE_CURRENCY[chainId]
+    console.log("🚀 ~ isWrap ~ weth:", weth)
     return Boolean(
       (amountSpecified.currency.isNative && weth?.equals(otherCurrency)) ||
-        (otherCurrency.isNative && weth?.equals(amountSpecified.currency))
+      (otherCurrency.isNative && weth?.equals(amountSpecified.currency))
     )
   }, [amountSpecified, chainId, otherCurrency])
-
+  console.log("🚀 ~ isWrap ~ isWrap:", isWrap)
   const [routerPreference] = useRouterPreference()
   const multipleRouteOptionsEnabled = useFeatureFlag(FeatureFlags.MultipleRoutingOptions)
   const multipleRouteOptionsRoutingPreference = useAtomValue(routingPreferencesAtom)

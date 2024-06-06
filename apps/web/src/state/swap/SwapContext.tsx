@@ -1,11 +1,17 @@
-import { ChainId, Currency } from '@uniswap/sdk-core'
-import { SwapTab } from 'components/swap/constants'
-import usePrevious from 'hooks/usePrevious'
-import { PropsWithChildren, useEffect, useMemo, useState } from 'react'
-import { useChainId } from 'wagmi'
+import { ChainId, Currency } from "@uniswap/sdk-core";
+import { SwapTab } from "components/swap/constants";
+import usePrevious from "hooks/usePrevious";
+import { PropsWithChildren, useEffect, useMemo, useState } from "react";
+import { useChainId } from "wagmi";
 
-import { useDerivedSwapInfo } from './hooks'
-import { CurrencyState, SwapAndLimitContext, SwapContext, SwapState, initialSwapState } from './types'
+import { useDerivedSwapInfo } from "./hooks";
+import {
+  CurrencyState,
+  SwapAndLimitContext,
+  SwapContext,
+  SwapState,
+  initialSwapState,
+} from "./types";
 
 export function SwapAndLimitContextProvider({
   children,
@@ -13,16 +19,16 @@ export function SwapAndLimitContextProvider({
   initialInputCurrency,
   initialOutputCurrency,
 }: PropsWithChildren<{
-  chainId?: ChainId
-  initialInputCurrency?: Currency
-  initialOutputCurrency?: Currency
+  chainId?: ChainId;
+  initialInputCurrency?: Currency;
+  initialOutputCurrency?: Currency;
 }>) {
-  const [currentTab, setCurrentTab] = useState<SwapTab>(SwapTab.Swap)
+  const [currentTab, setCurrentTab] = useState<SwapTab>(SwapTab.Swap);
 
   const [currencyState, setCurrencyState] = useState<CurrencyState>({
     inputCurrency: initialInputCurrency,
     outputCurrency: initialOutputCurrency,
-  })
+  });
 
   const prefilledState = useMemo(
     () => ({
@@ -30,33 +36,49 @@ export function SwapAndLimitContextProvider({
       outputCurrency: initialOutputCurrency,
     }),
     [initialInputCurrency, initialOutputCurrency]
-  )
+  );
 
-  const connectedChainId = useChainId()
-  const previousConnectedChainId = usePrevious(connectedChainId)
-  const previousPrefilledState = usePrevious(prefilledState)
+  const connectedChainId = useChainId();
+  // 上一次链接的链
+  const previousConnectedChainId = usePrevious(connectedChainId);
+  // 上一次的啥
+  const previousPrefilledState = usePrevious(prefilledState);
 
   useEffect(() => {
-    const combinedCurrencyState = { ...currencyState, ...prefilledState }
-    const chainChanged = previousConnectedChainId && previousConnectedChainId !== connectedChainId
+    const combinedCurrencyState = { ...currencyState, ...prefilledState };
+    // 链是否改变
+    const chainChanged =
+      previousConnectedChainId && previousConnectedChainId !== connectedChainId;
+    // 啥是否改变?
     const prefilledInputChanged = Boolean(
       previousPrefilledState?.inputCurrency
-        ? !prefilledState.inputCurrency?.equals(previousPrefilledState.inputCurrency)
+        ? !prefilledState.inputCurrency?.equals(
+            previousPrefilledState.inputCurrency
+          )
         : prefilledState.inputCurrency
-    )
+    );
     const prefilledOutputChanged = Boolean(
       previousPrefilledState?.outputCurrency
-        ? !prefilledState?.outputCurrency?.equals(previousPrefilledState.outputCurrency)
+        ? !prefilledState?.outputCurrency?.equals(
+            previousPrefilledState.outputCurrency
+          )
         : prefilledState.outputCurrency
-    )
+    );
 
+    // 修改tokens
     if (chainChanged || prefilledInputChanged || prefilledOutputChanged) {
       setCurrencyState({
         inputCurrency: combinedCurrencyState.inputCurrency ?? undefined,
         outputCurrency: combinedCurrencyState.outputCurrency ?? undefined,
-      })
+      });
     }
-  }, [connectedChainId, currencyState, prefilledState, previousConnectedChainId, previousPrefilledState])
+  }, [
+    connectedChainId,
+    currencyState,
+    prefilledState,
+    previousConnectedChainId,
+    previousPrefilledState,
+  ]);
 
   const value = useMemo(() => {
     return {
@@ -66,27 +88,47 @@ export function SwapAndLimitContextProvider({
       setCurrentTab,
       prefilledState,
       chainId,
-    }
-  }, [currencyState, setCurrencyState, currentTab, setCurrentTab, prefilledState, chainId])
+    };
+  }, [
+    currencyState,
+    setCurrencyState,
+    currentTab,
+    setCurrentTab,
+    prefilledState,
+    chainId,
+  ]);
 
-  return <SwapAndLimitContext.Provider value={value}>{children}</SwapAndLimitContext.Provider>
+  return (
+    <SwapAndLimitContext.Provider value={value}>
+      {children}
+    </SwapAndLimitContext.Provider>
+  );
 }
 
-export function SwapContextProvider({ children }: { children: React.ReactNode }) {
+export function SwapContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [swapState, setSwapState] = useState<SwapState>({
     ...initialSwapState,
-  })
-  const derivedSwapInfo = useDerivedSwapInfo(swapState)
+  });
+  const derivedSwapInfo = useDerivedSwapInfo(swapState);
 
-  const connectedChainId = useChainId()
-  const previousConnectedChainId = usePrevious(connectedChainId)
+  const connectedChainId = useChainId();
+  const previousConnectedChainId = usePrevious(connectedChainId);
 
   useEffect(() => {
-    const chainChanged = previousConnectedChainId && previousConnectedChainId !== connectedChainId
+    const chainChanged =
+      previousConnectedChainId && previousConnectedChainId !== connectedChainId;
     if (chainChanged) {
-      setSwapState((prev) => ({ ...prev, typedValue: '' }))
+      setSwapState((prev) => ({ ...prev, typedValue: "" }));
     }
-  }, [connectedChainId, previousConnectedChainId])
+  }, [connectedChainId, previousConnectedChainId]);
 
-  return <SwapContext.Provider value={{ swapState, setSwapState, derivedSwapInfo }}>{children}</SwapContext.Provider>
+  return (
+    <SwapContext.Provider value={{ swapState, setSwapState, derivedSwapInfo }}>
+      {children}
+    </SwapContext.Provider>
+  );
 }
